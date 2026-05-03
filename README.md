@@ -15,7 +15,7 @@ A pipeline that scrapes the replies to [@radthanael's Threads post](https://www.
 | `paginate.py` | Uses the saved `state.json` to scrape all top-level replies via authenticated pagination (scroll triggers + "View more replies" clicks). Captures GraphQL responses on the fly and walks them for reply objects. |
 | `extract_fields.py` | Async batch — sends each reply to Claude Opus 4.7 with a Pydantic structured-output schema. Extracts `location_country`, `us_state`, `knew_donner` (yes/no/partial/unspecified), `learned_from` (school/media/family/other), and a verbatim evidence quote. |
 | `chart.py` | Generates four Plotly visualisations: US choropleth, top-N location bar, country bar, learned-from bar. |
-| `build_site.py` | Renders the showcase: `docs/index.html` with all four charts inlined, plus standalone `.html` and `.png` copies. |
+| `build_site.py` | Refreshes the chart artefacts in `docs/charts/` (PNGs + standalone interactive HTML). The page itself, `docs/index.html`, is hand-designed via [claude.ai/design](https://claude.ai/design) using `design_brief.md` as input — `build_site.py` does not regenerate it. |
 
 ## Running it yourself
 

@@ -1,124 +1,738 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Did Threads repliers know about the Donner Party?</title>
-  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
-  <style>
-    :root { color-scheme: light; }
-    body {
-      font: 17px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-      max-width: 920px;
-      margin: 2.5rem auto 4rem;
-      padding: 0 1.25rem;
-      color: #222;
-      background: #fafafa;
-    }
-    h1 { font-size: 2.1rem; line-height: 1.2; margin-bottom: 0.25rem; }
-    h2 { margin-top: 3rem; padding-bottom: 0.4rem; border-bottom: 1px solid #ddd; font-size: 1.5rem; }
-    h3 { margin-top: 2rem; font-size: 1.15rem; color: #444; }
-    .meta { color: #666; font-size: 0.95rem; margin-top: 0.25rem; }
-    .stat { font-size: 1.5rem; font-weight: 600; color: #2E7D32; }
-    .stat-row { display: flex; gap: 2rem; flex-wrap: wrap; margin: 1rem 0 2rem; }
-    .stat-card { background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 1rem 1.25rem; min-width: 180px; }
-    .stat-card .num { font-size: 2rem; font-weight: 700; color: #2E7D32; line-height: 1; }
-    .stat-card .label { font-size: 0.85rem; color: #666; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 0.3rem; }
-    .chart { margin: 2rem -0.5rem; background: white; border: 1px solid #e8e8e8; border-radius: 8px; padding: 0.5rem; }
-    .chart-caption { font-size: 0.9rem; color: #555; margin: 0.5rem 0.75rem 1rem; }
-    blockquote { border-left: 3px solid #999; padding: 0.25rem 1rem; color: #444; font-style: italic; margin: 1.5rem 0; }
-    a { color: #1565C0; text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    .disclosure { background: #fff8e1; border-left: 4px solid #f9a825; padding: 0.9rem 1.1rem; margin: 2rem 0; border-radius: 4px; font-size: 0.95rem; }
-    code { background: #f0f0f0; padding: 0.1em 0.35em; border-radius: 3px; font-size: 0.92em; }
-    footer { margin-top: 4rem; padding-top: 1.5rem; border-top: 1px solid #ddd; color: #888; font-size: 0.9rem; }
-    ul.sources { padding-left: 1.5rem; }
-    ul.sources li { margin: 0.3rem 0; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Did Threads repliers know about the Donner Party?</title>
+<meta name="description" content="An analysis of 1,018 replies to a viral Threads post about the Donner Party. 95% knew. School, not geography, is the dividing line.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300..900;1,8..60,300..900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: light;
+    --paper:        #f6f1e7;
+    --paper-deep:   #ede5d2;
+    --ink:          #1c1a17;
+    --ink-soft:     #3a352e;
+    --ink-mute:     #6b6256;
+    --rule:         #d9cfb8;
+    --rule-soft:    #e6dec9;
+    --moss:         #2f5d3a;
+    --moss-deep:    #1f4128;
+    --moss-tint:    #e1ecdc;
+    --ember:        #a4422a;
+    --amber:        #b07d20;
+    --serif:        "Source Serif 4", "Iowan Old Style", "Apple Garamond", Georgia, serif;
+    --sans:         "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --mono:         "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  body {
+    font-family: var(--serif);
+    font-size: 19px;
+    line-height: 1.6;
+    color: var(--ink);
+    background: var(--paper);
+    background-image:
+      radial-gradient(ellipse 1200px 600px at 50% -200px, rgba(47,93,58,0.06), transparent 60%),
+      radial-gradient(ellipse 800px 400px at 90% 30%, rgba(164,66,42,0.04), transparent 60%);
+    background-attachment: fixed;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "kern", "liga", "onum";
+  }
+
+  /* ========== layout shell ========== */
+  .page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: clamp(2rem, 5vw, 4rem) clamp(1.25rem, 4vw, 2rem) 6rem;
+  }
+  /* text elements are narrower and centered within the wider page */
+  .page > p,
+  .page > h1,
+  .page > h2,
+  .page > h3,
+  .page > .eyebrow,
+  .page > .deck,
+  .page > .byline,
+  .page > .masthead,
+  .page > blockquote,
+  .page > .stats,
+  .page > .callout,
+  .page > ul.caveats,
+  .page > .source-grid,
+  .page > .reframe,
+  .page > .legend,
+  .page > .ornament,
+  .page > footer.colophon {
+    max-width: 760px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .wide {
+    width: 100%;
+    max-width: 1100px;
+    margin-inline: auto;
+    margin-block: 3rem;
+  }
+
+  /* ========== masthead ========== */
+  .masthead {
+    border-top: 1px solid var(--ink);
+    border-bottom: 1px solid var(--rule);
+    padding: 0.6rem 0 0.6rem;
+    margin-bottom: 3.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    font-family: var(--sans);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  .masthead .left { display: flex; align-items: center; gap: 0.7rem; }
+  .masthead .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--moss);
+    display: inline-block;
+  }
+  .masthead .right { font-variant-numeric: tabular-nums; }
+
+  /* ========== hero ========== */
+  .eyebrow {
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--moss);
+    margin-bottom: 1.2rem;
+  }
+  h1.title {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-style: italic;
+    font-size: clamp(2.4rem, 6vw, 4.2rem);
+    line-height: 1.02;
+    letter-spacing: -0.022em;
+    margin: 0 0 1.4rem;
+    color: var(--ink);
+    text-wrap: balance;
+  }
+  h1.title em {
+    font-style: normal;
+    color: var(--moss-deep);
+  }
+  .deck {
+    font-family: var(--serif);
+    font-size: clamp(1.1rem, 2vw, 1.3rem);
+    line-height: 1.45;
+    color: var(--ink-soft);
+    max-width: 36em;
+    margin: 0 0 2rem;
+    text-wrap: pretty;
+  }
+  .byline {
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--ink-mute);
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    padding: 0.7rem 0;
+    margin: 0 0 3rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.4rem;
+  }
+  .byline span strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .byline a { color: var(--moss-deep); }
+
+  /* ========== body type ========== */
+  p {
+    margin: 0 0 1.1rem;
+    text-wrap: pretty;
+    hyphens: auto;
+  }
+  p + p { text-indent: 1.6em; }
+  p.lede + p, p.no-indent + p, h2 + p, h3 + p, blockquote + p,
+  .stats + p, .figure + p, .callout + p, p.no-indent { text-indent: 0; }
+
+  .lede::first-letter {
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: 4.6em;
+    float: left;
+    line-height: 0.85;
+    margin: 0.08em 0.08em 0 -0.04em;
+    color: var(--moss-deep);
+    font-style: normal;
+  }
+
+  a {
+    color: var(--moss-deep);
+    text-decoration: underline;
+    text-decoration-color: var(--rule);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+    transition: text-decoration-color 0.15s ease;
+  }
+  a:hover { text-decoration-color: var(--moss); }
+
+  strong { font-weight: 700; color: var(--ink); }
+  em { font-style: italic; }
+  code {
+    font-family: var(--mono);
+    font-size: 0.86em;
+    background: var(--paper-deep);
+    padding: 0.08em 0.4em;
+    border-radius: 3px;
+    color: var(--ink-soft);
+  }
+
+  /* ========== headings ========== */
+  h2 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: clamp(1.5rem, 3vw, 1.95rem);
+    line-height: 1.15;
+    letter-spacing: -0.012em;
+    margin: 4rem 0 1rem;
+    color: var(--ink);
+    text-wrap: balance;
+  }
+  h2 .sec-num {
+    display: block;
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--moss);
+    margin-bottom: 0.4rem;
+  }
+  h3 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 1.15rem;
+    margin: 2rem 0 0.5rem;
+    color: var(--ink);
+  }
+
+  /* ========== pull quote ========== */
+  blockquote.pull {
+    margin: 2.4rem 0;
+    padding: 0.4rem 0 0.4rem 1.6rem;
+    border-left: 3px solid var(--moss);
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(1.25rem, 2.4vw, 1.55rem);
+    line-height: 1.35;
+    color: var(--ink-soft);
+    text-wrap: balance;
+  }
+  blockquote.pull::before {
+    content: "“";
+    font-size: 3em;
+    line-height: 0;
+    vertical-align: -0.35em;
+    color: var(--moss);
+    margin-right: 0.06em;
+    font-style: normal;
+  }
+  blockquote.pull cite {
+    display: block;
+    font-style: normal;
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-top: 0.9rem;
+  }
+
+  /* ========== stat card row ========== */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    margin: 2.2rem 0 2rem;
+    border-top: 1px solid var(--ink);
+    border-bottom: 1px solid var(--ink);
+  }
+  .stat {
+    padding: 1.2rem 1rem 1.3rem;
+    border-right: 1px solid var(--rule);
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .stat:last-child { border-right: 0; }
+  .stat .num {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: clamp(2rem, 4.5vw, 2.9rem);
+    line-height: 1;
+    color: var(--moss-deep);
+    letter-spacing: -0.02em;
+    font-variant-numeric: lining-nums tabular-nums;
+  }
+  .stat .num .pct {
+    font-size: 0.55em;
+    margin-left: 0.05em;
+    color: var(--moss);
+    font-weight: 500;
+  }
+  .stat .label {
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    line-height: 1.3;
+    margin-top: 0.4rem;
+  }
+  @media (max-width: 640px) {
+    .stats { grid-template-columns: repeat(2, 1fr); border-bottom: 0; }
+    .stat { border-bottom: 1px solid var(--rule); }
+    .stat:nth-child(2n) { border-right: 0; }
+    .stat:nth-last-child(-n+2) { border-bottom: 1px solid var(--ink); }
+  }
+
+  /* ========== figure ========== */
+  .figure {
+    margin: 2.5rem 0;
+  }
+  .figure .frame {
+    background: #ffffff;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 0.5rem;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.02), 0 16px 40px -24px rgba(28, 26, 23, 0.18);
+  }
+  .figure img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .figure figcaption {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--ink-mute);
+    margin-top: 0.9rem;
+    padding-left: 0.6rem;
+    border-left: 2px solid var(--rule);
+    max-width: 56em;
+  }
+  .figure figcaption strong {
+    font-style: normal;
+    font-weight: 600;
+    color: var(--ink-soft);
+  }
+  .figure .fig-num {
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--moss);
+    margin-right: 0.6rem;
+  }
+
+  /* ========== callout / disclosure ========== */
+  .callout {
+    margin: 2.5rem 0;
+    padding: 1.2rem 1.4rem;
+    background: var(--paper-deep);
+    border-left: 3px solid var(--amber);
+    font-family: var(--serif);
+    font-size: 16px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    border-radius: 0 4px 4px 0;
+  }
+  .callout strong {
+    display: block;
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 0.4rem;
+  }
+
+  /* ========== caveats list ========== */
+  ul.caveats {
+    list-style: none;
+    padding: 0;
+    margin: 1.4rem 0;
+    border-top: 1px solid var(--rule);
+  }
+  ul.caveats li {
+    padding: 0.85rem 0 0.85rem 2.2rem;
+    border-bottom: 1px solid var(--rule);
+    position: relative;
+    font-size: 17px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+  }
+  ul.caveats li::before {
+    content: "§";
+    position: absolute;
+    left: 0.4rem;
+    top: 0.85rem;
+    font-family: var(--serif);
+    color: var(--moss);
+    font-style: italic;
+    font-size: 1.1em;
+  }
+  ul.caveats li strong { color: var(--ink); }
+
+  /* ========== reframing flourish ========== */
+  .reframe {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 1.2rem;
+    margin: 2rem 0;
+    padding: 0;
+  }
+  .reframe .crossed {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 1.3rem;
+    color: var(--ink-mute);
+    text-decoration: line-through;
+    text-decoration-color: var(--ember);
+    text-decoration-thickness: 2px;
+  }
+  .reframe .arrow {
+    font-family: var(--serif);
+    font-size: 1.4rem;
+    color: var(--moss);
+  }
+  .reframe .promoted {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 1.3rem;
+    color: var(--moss-deep);
+    font-style: italic;
+  }
+  @media (max-width: 600px) {
+    .reframe { grid-template-columns: 1fr; gap: 0.4rem; text-align: left; }
+    .reframe .arrow { transform: rotate(90deg); width: fit-content; }
+  }
+
+  /* ========== source breakdown mini-viz ========== */
+  .source-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    margin: 1.5rem 0 2rem;
+    font-family: var(--sans);
+  }
+  .source-row {
+    display: grid;
+    grid-template-columns: 110px 1fr 70px;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+  .source-row .src-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: 0.04em;
+  }
+  .source-row .src-bar {
+    height: 10px;
+    background: var(--paper-deep);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+  }
+  .source-row .src-fill {
+    height: 100%;
+    background: var(--moss);
+    border-radius: 2px;
+  }
+  .source-row.muted .src-fill { background: var(--ink-mute); opacity: 0.45; }
+  .source-row .src-num {
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ink);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ========== legend chips ========== */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.1rem;
+    font-family: var(--sans);
+    font-size: 12px;
+    color: var(--ink-mute);
+    margin: -0.4rem 0 1rem;
+    letter-spacing: 0.02em;
+  }
+  .legend .chip { display: inline-flex; align-items: center; gap: 0.35rem; }
+  .legend .swatch {
+    width: 10px; height: 10px; border-radius: 2px; display: inline-block;
+  }
+
+  /* ========== footer ========== */
+  footer.colophon {
+    margin-top: 5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--ink);
+    font-family: var(--sans);
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--ink-mute);
+    letter-spacing: 0.02em;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
+  }
+  footer.colophon .left { max-width: 40em; }
+  footer.colophon .codename {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-mute);
+    letter-spacing: 0;
+    white-space: nowrap;
+  }
+  footer.colophon .codename .dash { color: var(--moss); }
+  footer.colophon a { color: var(--ink-soft); }
+  @media (max-width: 540px) {
+    footer.colophon { grid-template-columns: 1fr; }
+  }
+
+  /* ========== ornament ========== */
+  .ornament {
+    text-align: center;
+    margin: 3rem 0;
+    color: var(--ink-mute);
+    letter-spacing: 0.6em;
+    font-size: 14px;
+    font-family: var(--serif);
+  }
+
+  /* ========== mobile tweaks ========== */
+  @media (max-width: 640px) {
+    body { font-size: 17.5px; }
+    .lede::first-letter { font-size: 4em; }
+  }
+</style>
 </head>
 <body>
 
-<h1>Did Threads repliers know about the Donner Party?</h1>
-<p class="meta">An analysis of 1018 replies to <a href="https://www.threads.com/@radthanael/post/DX0AeUTEZs5">@radthanael's post</a>.</p>
+<div class="page">
 
-<h2>The story</h2>
-<p>Nathanael was visiting friends in Richmond, Virginia. The conversation drifted, as it does, to a topic that reminded him of cannibalism — so he said, "Ahh, like the Donner Party." His friends, lifelong East Coasters, looked at him blankly. He explained: the wagon train, the Sierra Nevada, the winter of 1846, the cannibalism. They had no memory of it.</p>
+  <header class="masthead">
+    <div class="left">
+      <span class="dot"></span>
+      <span>A Reading of 1,018 Replies</span>
+    </div>
+    <div class="right">No. 01 &nbsp;·&nbsp; May 2026</div>
+  </header>
 
-<p><a href="https://www.threads.com/@radthanael/post/DX0AeUTEZs5">He posted about it</a> and asked his readers a question:</p>
+  <div class="eyebrow">A small data essay</div>
 
-<blockquote>If you grew up outside the west coast, have you heard of The Donner Party, and where did you learn about them?</blockquote>
+  <h1 class="title">Did Threads repliers really know about <em>the&nbsp;Donner Party?</em></h1>
 
-<p>The post got around two thousand eight hundred replies (counting nested ones). This page summarises the 1018 top-level replies analysed for location and prior knowledge.</p>
+  <p class="deck">A friend asked his readers a question on a whim, got two thousand eight hundred replies, and the answer turned out to be more interesting than the question.</p>
 
-<h2>Headline finding</h2>
-
-<div class="stat-row">
-  <div class="stat-card">
-    <div class="num">95%</div>
-    <div class="label">of clear answers said yes</div>
+  <div class="byline">
+    <span><strong>Source</strong> &nbsp;<a href="https://www.threads.com/@radthanael/post/DX0AeUTEZs5">@radthanael on Threads</a></span>
+    <span><strong>Sample</strong> &nbsp;1,018 top-level replies</span>
+    <span><strong>Method</strong> &nbsp;Playwright · Claude Opus 4.7 · Plotly</span>
   </div>
-  <div class="stat-card">
-    <div class="num">96%</div>
-    <div class="label">US repliers, yes rate</div>
+
+  <!-- ===== STORY ===== -->
+  <h2><span class="sec-num">I &nbsp;·&nbsp; The Setup</span>An evening in Richmond.</h2>
+
+  <p class="lede no-indent">Last autumn, my friend Nathanael was visiting friends in Richmond, Virginia. The conversation drifted, as it does, to a topic that reminded him of cannibalism — so he said, “Ahh, like the Donner Party.” His friends, lifelong East Coasters, looked at him blankly. He explained: the wagon train, the Sierra Nevada, the winter of 1846, the cannibalism. They had no memory of it.</p>
+
+  <p>It seemed strange enough to be worth posting about. So he asked his readers a question:</p>
+
+  <blockquote class="pull">
+    If you grew up outside the west coast, have you heard of The Donner Party, and where did you learn about them?
+    <cite>— @radthanael, Threads</cite>
+  </blockquote>
+
+  <p>The post collected roughly two thousand eight hundred replies, counting the nested ones. I scraped the 1,018 top-level replies, ran each through Claude Opus 4.7 with a structured-output schema, and tallied location, knowledge, and learning source. What follows is what fell out.</p>
+
+  <!-- ===== HEADLINE ===== -->
+  <h2><span class="sec-num">II &nbsp;·&nbsp; The Headline</span>Almost everyone knew.</h2>
+
+  <p class="no-indent">Of the 931 replies that gave a clear yes, no, or partial answer, 95% said yes. The rate barely moves when you split by passport: Americans came in at 96%, the rest of the English-speaking world at 94%.</p>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="num">95<span class="pct">%</span></div>
+      <div class="label">Said yes — of clear answers</div>
+    </div>
+    <div class="stat">
+      <div class="num">96<span class="pct">%</span></div>
+      <div class="label">US repliers, yes rate</div>
+    </div>
+    <div class="stat">
+      <div class="num">94<span class="pct">%</span></div>
+      <div class="label">Non-US repliers, yes rate</div>
+    </div>
+    <div class="stat">
+      <div class="num">931</div>
+      <div class="label">Clear yes / no / partial answers</div>
+    </div>
   </div>
-  <div class="stat-card">
-    <div class="num">94%</div>
-    <div class="label">non-US repliers, yes rate</div>
+
+  <p>Which is to say: Nathanael's Richmond friends were not the leading edge of an East Coast knowledge gap. They were <strong>genuine outliers</strong> — three people on a couch in Virginia, against a quiet near-consensus stretching from Cornwall to Brisbane.</p>
+
+  <!-- ===== MAP ===== -->
+  <h2><span class="sec-num">III &nbsp;·&nbsp; The Map</span>A country, mostly green.</h2>
+
+  <p class="no-indent">States are coloured by the share of their repliers who answered yes, calculated only over clear answers. Sarcastic and unclassifiable replies were excluded from the denominator. The whole country glows; only Iowa runs noticeably lighter, and only South Dakota is grey, because no one from there replied at all.</p>
+
+  <figure class="figure wide">
+    <div class="frame">
+      <img src="charts/donner_choropleth.png" alt="Choropleth map of US states coloured by the share of repliers from each state who said they knew about the Donner Party. Almost every state is dark green; Iowa is visibly lighter; South Dakota is grey." width="2400" height="1440" loading="lazy">
+    </div>
+    <figcaption><span class="fig-num">Fig. 1</span><strong>Knowledge by US state.</strong> Iowa is the lone lighter state — driven in part by a now-famous reply from a lifelong Iowan who first heard of the Donners from this very post. South Dakota is grey: zero replies received.</figcaption>
+  </figure>
+
+  <!-- ===== TOP LOCATIONS ===== -->
+  <h2><span class="sec-num">IV &nbsp;·&nbsp; The Top Locations</span>California leads. Virginia, interestingly, dissents.</h2>
+
+  <p class="no-indent">Each row is a place; each segment is a count of replies coloured by what the replier said. The "US" row is for repliers identified as American who didn't name a state.</p>
+
+  <div class="legend">
+    <span class="chip"><span class="swatch" style="background:#2E7D32"></span>Yes</span>
+    <span class="chip"><span class="swatch" style="background:#F9A825"></span>Partial</span>
+    <span class="chip"><span class="swatch" style="background:#C62828"></span>No</span>
+    <span class="chip"><span class="swatch" style="background:#9E9E9E"></span>Unspecified</span>
   </div>
-  <div class="stat-card">
-    <div class="num">931</div>
-    <div class="label">clear yes/no/partial answers</div>
+
+  <figure class="figure wide">
+    <div class="frame">
+      <img src="charts/donner_bar.png" alt="Horizontal stacked bar chart of the top 30 locations by reply count, coloured by yes/no/partial/unspecified. California leads, then Virginia, New York, Britain, Ohio, Pennsylvania." width="2800" height="1720" loading="lazy">
+    </div>
+    <figcaption><span class="fig-num">Fig. 2</span><strong>Top 30 locations by reply count.</strong> California is the runaway top contributor. Virginia comes in third overall, and is one of the few places with a visibly red sliver — possibly including the original Richmond friends who started all this.</figcaption>
+  </figure>
+
+  <!-- ===== INTERNATIONAL ===== -->
+  <h2><span class="sec-num">V &nbsp;·&nbsp; The International Tail</span>Britain knows. So does Canada. So does Singapore.</h2>
+
+  <p class="no-indent">104 replies came from outside the United States, spread across 15 countries. Britain alone contributed forty — a surprising depth of recall for an 1846 American disaster on a continent where the Sierra Nevada is, at best, a brand of beer.</p>
+
+  <figure class="figure wide">
+    <div class="frame">
+      <img src="charts/donner_countries.png" alt="Horizontal stacked bar chart of international repliers by country. Britain leads at 40, Canada at 30, Australia at 13, then a long tail of single-digit countries: New Zealand, Ireland, South Africa, Philippines, Netherlands, Turkey, Singapore, Sweden, Puerto Rico, Norway, Mexico, Argentina." width="2400" height="1180" loading="lazy">
+    </div>
+    <figcaption><span class="fig-num">Fig. 3</span><strong>International repliers, by country.</strong> Britain (40), Canada (30) and Australia (13) make up the bulk. The tail runs all the way to single replies from Argentina, Mexico, Norway, Puerto Rico, Sweden, Singapore, and Turkey.</figcaption>
+  </figure>
+
+  <!-- ===== LEARNING SOURCE ===== -->
+  <h2><span class="sec-num">VI &nbsp;·&nbsp; Where They Learned It</span>It was school. It was almost always school.</h2>
+
+  <p class="no-indent">Of the 885 repliers who said yes, more named school than every other source put together — three hundred and four of them. Books, podcasts, films, and the immortal Oregon Trail computer game accounted for most of the remainder. A surprising number of the rest were taught by their own families.</p>
+
+  <div class="source-grid" aria-label="Where repliers learned about the Donner Party">
+    <div class="source-row">
+      <span class="src-label">School</span>
+      <span class="src-bar"><span class="src-fill" style="width: 97%"></span></span>
+      <span class="src-num">304</span>
+    </div>
+    <div class="source-row">
+      <span class="src-label">Media</span>
+      <span class="src-bar"><span class="src-fill" style="width: 57.2%"></span></span>
+      <span class="src-num">179</span>
+    </div>
+    <div class="source-row">
+      <span class="src-label">Other</span>
+      <span class="src-bar"><span class="src-fill" style="width: 18.8%"></span></span>
+      <span class="src-num">59</span>
+    </div>
+    <div class="source-row">
+      <span class="src-label">Family</span>
+      <span class="src-bar"><span class="src-fill" style="width: 9.6%"></span></span>
+      <span class="src-num">30</span>
+    </div>
+    <div class="source-row muted">
+      <span class="src-label">Unspecified</span>
+      <span class="src-bar"><span class="src-fill" style="width: 100%"></span></span>
+      <span class="src-num">313</span>
+    </div>
   </div>
+
+  <figure class="figure wide">
+    <div class="frame">
+      <img src="charts/donner_learned.png" alt="Bar chart titled 'Where did repliers who knew about the Donner Party learn it?' Five bars: school 304, media 179, family 30, other 59, unspecified 313." width="2800" height="920" loading="lazy">
+    </div>
+    <figcaption><span class="fig-num">Fig. 4</span><strong>Where repliers who knew learned about it.</strong> Among the 572 who named a source, school dominates by nearly two to one over the next category. The 313 who simply said yes without saying how aren't necessarily silent — they're just not asked to elaborate by a Threads reply box.</figcaption>
+  </figure>
+
+  <div class="ornament">· · ·</div>
+
+  <!-- ===== REFRAMING ===== -->
+  <h2><span class="sec-num">VII &nbsp;·&nbsp; The Reframing</span>The interesting question wasn't the one we asked.</h2>
+
+  <p class="no-indent">The original premise — that this might be a regional knowledge gap — does not survive the data. Knowledge of the Donner Party is, near as the data can tell, geographically uniform across both US states and English-speaking countries. So the more interesting question this dataset gives back is not <em>where</em> people grew up, but which curricula did or didn't cover this:</p>
+
+  <div class="reframe">
+    <span class="crossed">Where did you grow up?</span>
+    <span class="arrow">→</span>
+    <span class="promoted">Which curriculum taught you?</span>
+  </div>
+
+  <p>Nathanael's Richmond friends are not "East Coasters who didn't know." They're people whose schools didn't reach them with this particular story. Which is a more interesting puzzle, because schools — unlike geography — actually have a finite number of textbooks.</p>
+
+  <!-- ===== METHOD ===== -->
+  <h2><span class="sec-num">VIII &nbsp;·&nbsp; Method</span>How this was made.</h2>
+
+  <p class="no-indent">Replies were collected from the original post via a logged-in browser session driven by Playwright, paginating through the GraphQL endpoint until exhausted. Each reply was sent to <a href="https://www.anthropic.com/claude/opus">Claude Opus 4.7</a> with a structured-output schema asking four fields: <code>location</code>, <code>knew</code>, <code>learning_source</code>, and a verbatim evidence quote. Charts were drawn in Plotly. The whole pipeline runs end-to-end in about ten minutes.</p>
+
+  <div class="callout">
+    <strong>How the data was obtained</strong>
+    Replies were scraped from a public Threads post via a personal logged-in browser session. The raw text and per-reply identifiers are not included in the published repository — only aggregate counts and percentages. No reply text or username is shown on this page.
+  </div>
+
+  <h2><span class="sec-num">IX &nbsp;·&nbsp; Caveats</span>Things to keep in mind.</h2>
+
+  <ul class="caveats">
+    <li><strong>Unplaced replies.</strong> 284 of 1,018 replies didn't state a location and don't appear on the map.</li>
+    <li><strong>LLM classification.</strong> The yes / no / partial / unclear coding was made by an LLM. Spot-checks looked accurate, but a small error rate is unavoidable.</li>
+    <li><strong>Small samples.</strong> Some states and countries have single-digit reply counts. Treat percentages there as suggestive, not conclusive.</li>
+    <li><strong>Top-level only.</strong> Replies-to-replies were excluded; only top-level replies are analysed here.</li>
+  </ul>
+
+  <footer class="colophon">
+    <div class="left">
+      Built May 2026 with Python, Playwright, Claude, and Plotly — and a great deal of curiosity about a wagon train. Source on <a href="#">GitHub</a> <span style="opacity: 0.6;">(link forthcoming).</span>
+    </div>
+    <div class="codename">
+      <span class="dash">/</span> codename <em>donner-kebab</em>
+    </div>
+  </footer>
+
 </div>
-
-<p>Nathanael's Richmond friends were not representatives of an East Coast knowledge gap. They were <strong>genuine outliers</strong>. The vast majority of repliers — including those from Britain, Canada, Australia, New Zealand, and over a dozen other countries — knew about the Donner Party.</p>
-
-<h2>Where repliers came from</h2>
-<p>States are coloured by the share of repliers from that state who said yes, calculated only over clear answers (yes/no/partial). Sarcastic and unclear replies are excluded from the denominator. Hover for details.</p>
-
-<div class="chart"><div>                            <div id="chart-choropleth" class="plotly-graph-div" style="height:600px; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("chart-choropleth")) {                    Plotly.newPlot(                        "chart-choropleth",                        [{"coloraxis":"coloraxis","geo":"geo","hovertemplate":"\u003cb\u003e%{location}\u003c\u002fb\u003e\u003cbr\u003eTotal replies: %{customdata[0]}\u003cbr\u003eKnew: %{customdata[1]} | Didn't: %{customdata[2]} | Partial: %{customdata[3]} | Unclear: %{customdata[4]}\u003cbr\u003eShare who knew (of clear answers): %{customdata[5]}%\u003cextra\u003e\u003c\u002fextra\u003e","locationmode":"USA-states","locations":["AK","AL","AR","AZ","CA","CO","CT","DC","DE","FL","GA","IA","ID","IL","IN","KS","KY","LA","MA","MD","ME","MI","MN","MO","MS","MT","NC","ND","NE","NH","NJ","NM","NV","NY","OH","OK","OR","PA","PR","SC","TN","TX","UT","VA","VT","WA","WI","WV","WY"],"name":"","z":{"dtype":"f8","bdata":"AAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAEBYQAAAAAAAgFZAAAAAAAAAWUAAAAAAAABJQAAAAAAAAFlAAAAAAADAU0AAAAAAAABZQAAAAAAAwFRAAAAAAAAAWUAAAAAAAMBXQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAgFVAAAAAAAAAWUAAAAAAAABZQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAgFVAAAAAAACAWEAAAAAAAEBYQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABXQAAAAAAAAFlAAAAAAAAAWUAAAAAAAABZQAAAAAAAQFdAAAAAAAAAWUAAAAAAAIBWQAAAAAAAAFlAAAAAAAAAWUAAAAAAAIBWQAAAAAAAAFlAAAAAAAAAWUA="},"type":"choropleth","customdata":{"dtype":"f8","bdata":"AAAAAAAAAEAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFlAAAAAAAAAHEAAAAAAAAAcQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFlAAAAAAAAAHEAAAAAAAAAUQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAFlAAAAAAAAAAEAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFlAAAAAAACAQ0AAAAAAAABCQAAAAAAAAPA\u002fAAAAAAAAAAAAAAAAAAAAQAAAAAAAQFhAAAAAAAAAKEAAAAAAAAAiQAAAAAAAAPA\u002fAAAAAAAAAAAAAAAAAAAAQAAAAAAAgFZAAAAAAAAAIkAAAAAAAAAiQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFlAAAAAAAAAAEAAAAAAAADwPwAAAAAAAPA\u002fAAAAAAAAAAAAAAAAAAAAAAAAAAAAAElAAAAAAAAAAEAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFlAAAAAAAAANEAAAAAAAAAuQAAAAAAAAABAAAAAAAAAAEAAAAAAAADwPwAAAAAAwFNAAAAAAAAAJEAAAAAAAAAkQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFlAAAAAAAAAGEAAAAAAAAAUQAAAAAAAAPA\u002fAAAAAAAAAAAAAAAAAAAAAAAAAAAAwFRAAAAAAAAA8D8AAAAAAADwPwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFlAAAAAAAAANkAAAAAAAAA0QAAAAAAAAAAAAAAAAAAA8D8AAAAAAADwPwAAAAAAwFdAAAAAAAAAJEAAAAAAAAAkQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFlAAAAAAAAAFEAAAAAAAAAUQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFlAAAAAAAAACEAAAAAAAAAIQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFlAAAAAAAAAFEAAAAAAAAAUQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFlAAAAAAAAAMEAAAAAAAAAwQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFlAAAAAAAAAJEAAAAAAAAAkQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFlAAAAAAAAAFEAAAAAAAAAUQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFlAAAAAAAAAM0AAAAAAAAAzQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFlAAAAAAAAAIEAAAAAAAAAgQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFlAAAAAAAAAKEAAAAAAAAAoQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFlAAAAAAAAAAEAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFlAAAAAAAAA8D8AAAAAAADwPwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFlAAAAAAAAAHEAAAAAAAAAYQAAAAAAAAAAAAAAAAAAA8D8AAAAAAAAAAAAAAAAAgFVAAAAAAAAA8D8AAAAAAADwPwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFlAAAAAAAAA8D8AAAAAAADwPwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFlAAAAAAAAAEEAAAAAAAAAQQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFlAAAAAAAAALkAAAAAAAAAuQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFlAAAAAAAAAEEAAAAAAAAAQQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFlAAAAAAAAAIEAAAAAAAAAYQAAAAAAAAAAAAAAAAAAA8D8AAAAAAADwPwAAAAAAgFVAAAAAAAAARUAAAAAAAIBEQAAAAAAAAPA\u002fAAAAAAAAAAAAAAAAAAAAAAAAAAAAgFhAAAAAAACAQ0AAAAAAAABDQAAAAAAAAAAAAAAAAAAA8D8AAAAAAAAAAAAAAAAAQFhAAAAAAAAAJkAAAAAAAAAmQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFlAAAAAAAAAEEAAAAAAAAAIQAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwPwAAAAAAAFlAAAAAAAAAQkAAAAAAAIBAQAAAAAAAAABAAAAAAAAA8D8AAAAAAAAAAAAAAAAAAFdAAAAAAAAAAEAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFlAAAAAAAAAFEAAAAAAAAAUQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFlAAAAAAAAAJEAAAAAAAAAkQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFlAAAAAAAAAPkAAAAAAAAA8QAAAAAAAAPA\u002fAAAAAAAA8D8AAAAAAAAAAAAAAAAAQFdAAAAAAAAAHEAAAAAAAAAcQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFlAAAAAAAAASkAAAAAAAIBHQAAAAAAAABBAAAAAAAAA8D8AAAAAAAAAAAAAAAAAgFZAAAAAAAAAAEAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFlAAAAAAAAACEAAAAAAAAAIQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFlAAAAAAAAAJEAAAAAAAAAiQAAAAAAAAPA\u002fAAAAAAAAAAAAAAAAAAAAAAAAAAAAgFZAAAAAAAAAFEAAAAAAAAAUQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFlAAAAAAAAA8D8AAAAAAADwPwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFlA","shape":"49, 6"}}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"geo":{"domain":{"x":[0.0,1.0],"y":[0.0,1.0]},"center":{},"scope":"usa"},"coloraxis":{"colorbar":{"title":{"text":"% knew"},"ticksuffix":"%"},"colorscale":[[0.0,"rgb(165,0,38)"],[0.1,"rgb(215,48,39)"],[0.2,"rgb(244,109,67)"],[0.3,"rgb(253,174,97)"],[0.4,"rgb(254,224,139)"],[0.5,"rgb(255,255,191)"],[0.6,"rgb(217,239,139)"],[0.7,"rgb(166,217,106)"],[0.8,"rgb(102,189,99)"],[0.9,"rgb(26,152,80)"],[1.0,"rgb(0,104,55)"]],"cmin":0,"cmax":100},"legend":{"tracegroupgap":0},"margin":{"t":90,"b":40,"l":20,"r":20},"title":{"text":"Did Threads repliers know about the Donner Party?\u003cbr\u003e\u003csub\u003eBy US state (536 US repliers across 49 states). Color = % of clear answers that said 'yes'. Unclear\u002fsarcastic replies excluded from the denominator.\u003c\u002fsub\u003e","x":0.5}},                        {"responsive": true}                    )                };            </script>        </div></div>
-<p class="chart-caption">Iowa is the only US state visibly lighter — driven in part by the now-famous "I grew up in Iowa and I've never heard of the Donners until this post. Wild!" reply. South Dakota is grey: no replies received from there.</p>
-
-<h2>Top 30 locations by reply count</h2>
-
-<div class="chart"><div>                            <div id="chart-bar" class="plotly-graph-div" style="height:860px; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("chart-bar")) {                    Plotly.newPlot(                        "chart-bar",                        [{"hovertemplate":"\u003cb\u003e%{y}\u003c\u002fb\u003e\u003cbr\u003eyes: %{x}\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"color":"#2E7D32"},"name":"yes","orientation":"h","x":{"dtype":"i1","bdata":"BQYHBwYGCAkKCQoKCgsMCQwPEBMPFBwhJiUpL0BZ"},"y":["IA","NC","UT","AL","NV","AR","MN","CT","IN","WI","GA","MD","TN","OK","MO","CO","AU","NJ","MA","MI","FL","IL","TX","PA","OH","GB","NY","VA","CA","US"],"type":"bar"},{"hovertemplate":"\u003cb\u003e%{y}\u003c\u002fb\u003e\u003cbr\u003epartial: %{x}\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"color":"#F9A825"},"name":"partial","orientation":"h","x":{"dtype":"i1","bdata":"AAEAAAEAAAAAAAAAAAAAAAEAAAACAQEBAQEAAQEB"},"y":["IA","NC","UT","AL","NV","AR","MN","CT","IN","WI","GA","MD","TN","OK","MO","CO","AU","NJ","MA","MI","FL","IL","TX","PA","OH","GB","NY","VA","CA","US"],"type":"bar"},{"hovertemplate":"\u003cb\u003e%{y}\u003c\u002fb\u003e\u003cbr\u003eno: %{x}\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"color":"#C62828"},"name":"no","orientation":"h","x":{"dtype":"i1","bdata":"AQAAAAAAAAAAAQAAAAAAAQAAAAACAAECAAIBBAIC"},"y":["IA","NC","UT","AL","NV","AR","MN","CT","IN","WI","GA","MD","TN","OK","MO","CO","AU","NJ","MA","MI","FL","IL","TX","PA","OH","GB","NY","VA","CA","US"],"type":"bar"},{"hovertemplate":"\u003cb\u003e%{y}\u003c\u002fb\u003e\u003cbr\u003eunspecified: %{x}\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"color":"#9E9E9E"},"name":"unspecified","orientation":"h","x":{"dtype":"i1","bdata":"AAAAAAECAAAAAAAAAAAAAgAAAAABAQAAAAAAAAIC"},"y":["IA","NC","UT","AL","NV","AR","MN","CT","IN","WI","GA","MD","TN","OK","MO","CO","AU","NJ","MA","MI","FL","IL","TX","PA","OH","GB","NY","VA","CA","US"],"type":"bar"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"title":{"text":"Top 30 locations by reply count\u003cbr\u003e\u003csub\u003e734 replies with identified locations. US states use 2-letter codes; international uses ISO country codes.\u003c\u002fsub\u003e","x":0.5},"margin":{"t":90,"b":40,"l":80,"r":20},"legend":{"title":{"text":"Knew Donner Party?"},"orientation":"h","y":-0.12},"barmode":"stack","xaxis":{"title":{"text":"Number of replies"}},"yaxis":{"title":{"text":"Location"}},"height":860},                        {"responsive": true}                    )                };            </script>        </div></div>
-<p class="chart-caption">California leads, then Virginia (with several "no" answers — possibly including Nathanael's original interlocutors), New York, Britain, Ohio, Pennsylvania. The "US" bar represents repliers identified as American who didn't name a state.</p>
-
-<h2>International repliers</h2>
-
-<div class="chart"><div>                            <div id="chart-countries" class="plotly-graph-div" style="height:590px; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("chart-countries")) {                    Plotly.newPlot(                        "chart-countries",                        [{"hovertemplate":"\u003cb\u003e%{y}\u003c\u002fb\u003e\u003cbr\u003eyes: %{x}\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"color":"#2E7D32"},"name":"yes","orientation":"h","x":{"dtype":"i1","bdata":"AQEBAQEBAQICAgMFDBwl"},"y":["AR","MX","NO","PR","SE","SG","TR","NL","PH","ZA","IE","NZ","AU","CA","GB"],"type":"bar"},{"hovertemplate":"\u003cb\u003e%{y}\u003c\u002fb\u003e\u003cbr\u003epartial: %{x}\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"color":"#F9A825"},"name":"partial","orientation":"h","x":{"dtype":"i1","bdata":"AAAAAAAAAAAAAAAAAQEB"},"y":["AR","MX","NO","PR","SE","SG","TR","NL","PH","ZA","IE","NZ","AU","CA","GB"],"type":"bar"},{"hovertemplate":"\u003cb\u003e%{y}\u003c\u002fb\u003e\u003cbr\u003eno: %{x}\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"color":"#C62828"},"name":"no","orientation":"h","x":{"dtype":"i1","bdata":"AAAAAAAAAAAAAAAAAAEC"},"y":["AR","MX","NO","PR","SE","SG","TR","NL","PH","ZA","IE","NZ","AU","CA","GB"],"type":"bar"},{"hovertemplate":"\u003cb\u003e%{y}\u003c\u002fb\u003e\u003cbr\u003eunspecified: %{x}\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"color":"#9E9E9E"},"name":"unspecified","orientation":"h","x":{"dtype":"i1","bdata":"AAAAAAAAAAAAAAAAAAAA"},"y":["AR","MX","NO","PR","SE","SG","TR","NL","PH","ZA","IE","NZ","AU","CA","GB"],"type":"bar"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"title":{"text":"International repliers by country\u003cbr\u003e\u003csub\u003e104 non-US replies across 15 countries.\u003c\u002fsub\u003e","x":0.5},"margin":{"t":80,"b":40,"l":80,"r":20},"legend":{"title":{"text":"Knew Donner Party?"},"orientation":"h","y":-0.15},"barmode":"stack","xaxis":{"title":{"text":"Number of replies"}},"yaxis":{"title":{"text":"Country (ISO 3166-1 alpha-2)"}},"height":590},                        {"responsive": true}                    )                };            </script>        </div></div>
-<p class="chart-caption">104 replies from outside the US, across 15 countries. Britain alone contributed forty replies — the Donner Party has surprisingly broad international reach for an 1846 American disaster.</p>
-
-<h2>Where did they learn it?</h2>
-
-<div class="chart"><div>                            <div id="chart-learned" class="plotly-graph-div" style="height:460px; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("chart-learned")) {                    Plotly.newPlot(                        "chart-learned",                        [{"hovertemplate":"\u003cb\u003e%{x}\u003c\u002fb\u003e\u003cbr\u003e%{y} repliers\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"color":["#1565C0","#7B1FA2","#EF6C00","#00838F","#9E9E9E"]},"text":{"dtype":"f8","bdata":"AAAAAAAAc0AAAAAAAGBmQAAAAAAAAD5AAAAAAACATUAAAAAAAJBzQA=="},"textposition":"outside","x":["school","media","family","other","unspecified"],"y":{"dtype":"i2","bdata":"MAGzAB4AOwA5AQ=="},"type":"bar"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"title":{"text":"Where did repliers who knew about the Donner Party learn it?\u003cbr\u003e\u003csub\u003e885 repliers who said 'yes'. Many leave the source unspecified.\u003c\u002fsub\u003e","x":0.5},"margin":{"t":80,"b":40,"l":60,"r":20},"xaxis":{"title":{"text":"Source"}},"yaxis":{"title":{"text":"Number of repliers"}},"height":460},                        {"responsive": true}                    )                };            </script>        </div></div>
-<p class="chart-caption">Among repliers who said they knew, school is the dominant pathway when stated. 313 didn't mention a source.</p>
-
-<h2>The reframing</h2>
-<p>The original premise — that this might be a regional knowledge gap — does not survive the data. Knowledge of the Donner Party is, near as the data shows, geographically uniform across both US states and English-speaking countries.</p>
-
-<p>The dominant <em>source</em> is school. So the more interesting question this dataset posed back at Nathanael is not <em>where</em> people grew up, but <em>which curricula did or didn't cover this</em>. His Richmond friends are not just "East Coasters who didn't know" — they're people the school curriculum did not reach. That's a different and arguably more interesting question.</p>
-
-<h2>Methodology</h2>
-<p>Replies were collected from the original post via a logged-in browser session driven by Playwright, paginating through the GraphQL endpoint until exhausted. Each reply was then sent to <a href="https://www.anthropic.com/claude/opus">Claude Opus 4.7</a> with a structured-output schema asking for: location, whether they knew, where they learned, and a verbatim evidence quote.</p>
-
-<p>The full pipeline — scrape, extract, chart, build site — is in the <a href="https://github.com/jhitchcock/donner-threads-analysis">accompanying GitHub repo</a> (link will work once published). It runs end-to-end in about ten minutes from a logged-in session.</p>
-
-<div class="disclosure">
-<strong>How the data was obtained.</strong> Replies were scraped from a public Threads post via a personal logged-in browser session. The raw reply text and per-reply identifiers are not included in this published repository — only aggregate counts and percentages. No reply text or username is ever shown on this page.
-</div>
-
-<h2>Caveats</h2>
-<ul>
-<li>Replies that didn't state a location couldn't be placed on the map. 284 of 1018 fell into this bucket.</li>
-<li>The "yes/no/partial/unspecified" classification was made by an LLM. Spot-checks against a sample of replies showed it to be accurate, but a small error rate is unavoidable.</li>
-<li>Sample sizes for some states and countries are small (single digits). Hover the choropleth or read the bar chart for absolute counts before reading too much into a percentage.</li>
-<li>Replies-to-replies (nested sub-thread comments) were excluded — only top-level replies are analysed here.</li>
-</ul>
-
-<footer>
-Built 2026-05-02 with Python, Playwright, Claude, Plotly, and a great deal of curiosity about a wagon train.
-</footer>
 
 </body>
 </html>

@@ -41,3 +41,6 @@ paginate_authfail.png
 .idea/
 .vscode/
 *.swp
+
+# Design tool exports
+*.zip
