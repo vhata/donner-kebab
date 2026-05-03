@@ -1,0 +1,43 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Auth state — NEVER commit (contains live session cookies)
+state.json
+
+# Raw scraped data — contains usernames + full reply text (PII)
+replies.jsonl
+replies_full.jsonl
+extracted.jsonl
+extracted_full.jsonl
+
+# Pagination/probe debug artefacts
+probe/
+responses/
+responses_full/
+*.log
+paginate_authfail.png
+
+# Top-level chart files only — anchored to repo root, NOT docs/.
+# (The published copies live in docs/ and should be committed.)
+/donner_choropleth.html
+/donner_choropleth.png
+/donner_bar.html
+/donner_bar.png
+/donner_countries.html
+/donner_countries.png
+/donner_learned.html
+/donner_learned.png
+
+# Editor / OS detritus
+.DS_Store
+.idea/
+.vscode/
+*.swp

@@ -1,0 +1,12 @@
+[project]
+name = "threads-scrape"
+version = "0.1.0"
+description = "Scrape, classify, and visualise replies to a Threads post"
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=0.97.0",
+    "kaleido>=1.2.0",
+    "pandas>=3.0.2",
+    "playwright>=1.59.0",
+    "plotly>=6.7.0",
+]
